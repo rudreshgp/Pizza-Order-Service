@@ -2,22 +2,33 @@ package de.tub.ise.anwsys.models;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.MapKey;
+import javax.persistence.OneToMany;
+import java.util.Set;
 
 @Entity
 public class Pizza {
 
 	@Id
-	private int id;
+	private long id;
 	private String name;
 	private String size;
 	private double price;
+	@OneToMany(mappedBy = "pizza")
+	private Set<OrderItem> orderItems;
 
-	public int getId() {
+	public Set<OrderItem> getOrderItems() {
+		return orderItems;
+	}
+
+	public void setOrderItems(Set<OrderItem> orderItems) {
+		this.orderItems = orderItems;
+	}
+
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 
@@ -42,6 +53,17 @@ public class Pizza {
 	}
 
 	public void setPrice(double price) {
+		this.price = price;
+	}
+
+	public Pizza() {
+	}
+
+	public Pizza(long id, String name, String size, double price) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.size = size;
 		this.price = price;
 	}
 }

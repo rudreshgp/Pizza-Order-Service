@@ -1,14 +1,16 @@
 package de.tub.ise.anwsys.controllers;
 
-import de.tub.ise.anwsys.CustomExceptions.ItemNotFoundException;
 import de.tub.ise.anwsys.CustomExceptions.InvalidInputException;
+import de.tub.ise.anwsys.CustomExceptions.ItemNotFoundException;
 import de.tub.ise.anwsys.models.Pizza;
 import de.tub.ise.anwsys.repos.PizzaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.validation.ConstraintViolationException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,7 @@ public class PizzaController {
 	}
 
 	@RequestMapping("/pizza/{pizzaId}")
-	public Pizza getPizza(@PathVariable Integer pizzaId) throws ItemNotFoundException {
+	public Pizza getPizza(@PathVariable Long pizzaId) throws ItemNotFoundException {
 		Pizza pizza = pizzaRepository.findOne(pizzaId);
 		if (pizza == null) {
 			throw new ItemNotFoundException("Pizza could not be found");
@@ -50,8 +52,8 @@ public class PizzaController {
 	}
 
 	@RequestMapping(value = "/pizza/{pizzaId}", method = RequestMethod.PUT)
-	public String updatePizza(@RequestBody Pizza pizza, @PathVariable Integer pizzaId) throws ItemNotFoundException, ChangeSetPersister.NotFoundException {
-		if (pizza == null || pizzaId == 0 || pizzaId!=pizza.getId()) {
+	public String updatePizza(@RequestBody Pizza pizza, @PathVariable Long pizzaId) throws ItemNotFoundException, ChangeSetPersister.NotFoundException {
+		if (pizza == null || pizzaId == 0 || pizzaId != pizza.getId()) {
 			throw new InvalidInputException("Invalid pizza supplied");
 		}
 		if (pizzaRepository.findOne(pizzaId) == null) {
@@ -66,12 +68,16 @@ public class PizzaController {
 
 
 	@RequestMapping(value = "/pizza/{pizzaId}", method = RequestMethod.DELETE)
-	public String getPizza(@PathVariable int pizzaId) throws ItemNotFoundException {
+	public String deletePizza(@PathVariable Long pizzaId) throws ItemNotFoundException {
 		if (pizzaRepository.findOne(pizzaId) == null) {
 			throw new ItemNotFoundException("Pizza not found");
 		}
-		pizzaRepository.delete(pizzaId);
-		return "Deleted";
+		try {
+			pizzaRepository.delete(pizzaId);
+			return "Deleted";
+		} catch (DataIntegrityViolationException ex) {
+			throw new InvalidInputException("Cannot deelete Pizza as it contains toppings");
+		}
 	}
 
 
