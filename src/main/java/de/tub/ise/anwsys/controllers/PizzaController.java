@@ -4,13 +4,13 @@ import de.tub.ise.anwsys.CustomExceptions.InvalidInputException;
 import de.tub.ise.anwsys.CustomExceptions.ItemNotFoundException;
 import de.tub.ise.anwsys.models.Pizza;
 import de.tub.ise.anwsys.repos.PizzaRepository;
+import org.h2.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.validation.ConstraintViolationException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,13 +23,16 @@ public class PizzaController {
 	private PizzaRepository pizzaRepository;
 
 	@RequestMapping("/pizza")
-	public List<Pizza> getAllPizzas() {
-		ArrayList<Pizza> pizzas = new ArrayList<>();
-		pizzaRepository.findAll().forEach(pizzas::add);
+	public List<Long> getAllPizzas() throws ItemNotFoundException {
+		ArrayList<Long> pizzas = new ArrayList<>();
+		pizzaRepository.findAll().forEach(x -> pizzas.add(x.getId()));
+		if (pizzas.size() == 0) {
+			throw new ItemNotFoundException("No pizzas exist");
+		}
 		return pizzas;
 	}
 
-	@RequestMapping("/pizza/{pizzaId}")
+	@RequestMapping(value = "/pizza/{pizzaId}", method = RequestMethod.GET)
 	public Pizza getPizza(@PathVariable Long pizzaId) throws ItemNotFoundException {
 		Pizza pizza = pizzaRepository.findOne(pizzaId);
 		if (pizza == null) {
@@ -41,10 +44,22 @@ public class PizzaController {
 
 	@RequestMapping(value = "/pizza", method = RequestMethod.POST)
 	public String addPizza(@RequestBody Pizza pizza) throws InvalidInputException {
-		if (pizza == null) {
+		if (pizza == null || StringUtils.isNullOrEmpty(pizza.getName())) {
 			throw new InvalidInputException("Invalid input");
 		}
-		pizzaRepository.save(pizza);
+		if (StringUtils.isNullOrEmpty(pizza.getSize())) {
+			pizza.setSize(Pizza.Size.Standard.name());
+		} else {
+			Pizza.Size size = Pizza.Size.parse(pizza.getSize());
+			if (size == null) {
+				throw new InvalidInputException("The size is invalid. either enter Large or Standard");
+			}
+		}
+		try {
+			pizzaRepository.save(pizza);
+		} catch (DataIntegrityViolationException ex) {
+			throw new InvalidInputException("Another Pizza with the same name exists");
+		}
 		URI location = ServletUriComponentsBuilder
 				.fromCurrentRequest().path("/{pizzaId}")
 				.buildAndExpand(pizza.getId()).toUri();
@@ -52,31 +67,36 @@ public class PizzaController {
 	}
 
 	@RequestMapping(value = "/pizza/{pizzaId}", method = RequestMethod.PUT)
-	public String updatePizza(@RequestBody Pizza pizza, @PathVariable Long pizzaId) throws ItemNotFoundException, ChangeSetPersister.NotFoundException {
-		if (pizza == null || pizzaId == 0 || pizzaId != pizza.getId()) {
+	public String updatePizza(@RequestBody Pizza pizza, @PathVariable Long pizzaId) throws ItemNotFoundException {
+		if (pizza == null) {
 			throw new InvalidInputException("Invalid pizza supplied");
 		}
-		if (pizzaRepository.findOne(pizzaId) == null) {
-			throw new ItemNotFoundException("Pizza not found");
+		pizza.setId(pizzaId);
+		Pizza.Size size = Pizza.Size.parse(pizza.getSize());
+		if (size == null) {
+			throw new InvalidInputException("The size is invalid. either enter Large or Standard");
 		}
-		pizzaRepository.save(pizza);
-//		URI location = ServletUriComponentsBuilder
-//				.fromCurrentRequest().path("/{id}")
-//				.buildAndExpand(pizza.getId()).toUri();
+		try {
+			pizzaRepository.save(pizza);
+		} catch (DataIntegrityViolationException ex) {
+			throw new InvalidInputException("Another Pizza with the same name exists in the szstem");
+		}
 		return "Update okay";
 	}
 
 
 	@RequestMapping(value = "/pizza/{pizzaId}", method = RequestMethod.DELETE)
-	public String deletePizza(@PathVariable Long pizzaId) throws ItemNotFoundException {
-		if (pizzaRepository.findOne(pizzaId) == null) {
-			throw new ItemNotFoundException("Pizza not found");
-		}
+	public String deletePizza(@PathVariable Long pizzaId) throws ItemNotFoundException, InvalidInputException {
+//		if (pizzaRepository.findOne(pizzaId) == null) {
+//			throw new ItemNotFoundException("Pizza not found");
+//		}
 		try {
 			pizzaRepository.delete(pizzaId);
 			return "Deleted";
+		} catch (JpaObjectRetrievalFailureException ex) {
+			throw new ItemNotFoundException("The order with the specified id might not be available");
 		} catch (DataIntegrityViolationException ex) {
-			throw new InvalidInputException("Cannot deelete Pizza as it contains toppings");
+			throw new InvalidInputException("Cannot delete Pizza as it contains toppings");
 		}
 	}
 

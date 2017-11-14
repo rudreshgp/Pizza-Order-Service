@@ -1,11 +1,21 @@
 package de.tub.ise.anwsys.models;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 @Entity
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"PIZZA_ID", "NAME"})})
 public class Topping {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private long id;
+
+	private String name;
+
+	@ManyToOne
+	private Pizza pizza;
+
+	private double price;
+
 	public long getId() {
 		return id;
 	}
@@ -30,10 +40,6 @@ public class Topping {
 		this.price = price;
 	}
 
-	@Id
-	private long id;
-	private String name;
-	private double price;
 
 	public Pizza getPizza() {
 		return pizza;
@@ -43,8 +49,6 @@ public class Topping {
 		this.pizza = pizza;
 	}
 
-	@ManyToOne
-	private Pizza pizza;
 
 	public Topping() {
 	}

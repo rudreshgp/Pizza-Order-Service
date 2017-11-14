@@ -1,16 +1,20 @@
 package de.tub.ise.anwsys.models;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Set;
 
 @Entity
 @Table(name = "order_table")
 public class Order {
+
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long Id;
+
+	private double totalPrice;
+
+	private String recipient;
+
 
 	public long getId() {
 		return Id;
@@ -43,10 +47,6 @@ public class Order {
 	public void setOrderItems(Set<OrderItem> orderItems) {
 		this.orderItems = orderItems;
 	}
-
-	private double totalPrice;
-
-	private String recipient;
 
 	@OneToMany(mappedBy = "order")
 	private Set<OrderItem> orderItems;

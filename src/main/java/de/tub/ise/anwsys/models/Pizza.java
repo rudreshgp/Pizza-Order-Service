@@ -1,18 +1,22 @@
 package de.tub.ise.anwsys.models;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.Set;
 
 @Entity
 public class Pizza {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
+
+	@Column(unique = true)
 	private String name;
+
 	private String size;
+
 	private double price;
+
 	@OneToMany(mappedBy = "pizza")
 	private Set<OrderItem> orderItems;
 
@@ -41,7 +45,7 @@ public class Pizza {
 	}
 
 	public String getSize() {
-		return size;
+		return this.size;
 	}
 
 	public void setSize(String size) {
@@ -63,7 +67,42 @@ public class Pizza {
 		super();
 		this.id = id;
 		this.name = name;
-		this.size = size;
+		this.setSize(size);
 		this.price = price;
+	}
+
+	public enum Size {
+		Standard(1), Large(2);
+		private int value;
+
+		Size(int value) {
+			this.value = value;
+		}
+
+		public int getValue() {
+			return value;
+		}
+
+		public static Size parse(int value) {
+			Size size = null;
+			for (Size item : Size.values()) {
+				if (item.getValue() == value) {
+					size = item;
+					break;
+				}
+			}
+			return size;
+		}
+
+		public static Size parse(String sizeName) {
+			Size size = null;
+			for (Size item : Size.values()) {
+				if (item.name().toUpperCase().equals(sizeName.toUpperCase())) {
+					size = item;
+					break;
+				}
+			}
+			return size;
+		}
 	}
 }
