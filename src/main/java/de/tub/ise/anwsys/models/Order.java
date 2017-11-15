@@ -48,7 +48,7 @@ public class Order {
 		this.orderItems = orderItems;
 	}
 
-	@OneToMany(mappedBy = "order")
+	@OneToMany(mappedBy = "order", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
 	private Set<OrderItem> orderItems;
 
 
