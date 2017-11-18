@@ -142,7 +142,7 @@ public class OrderController {
 		} catch (JpaObjectRetrievalFailureException ex) {
 			throw new ItemNotFoundException("The order with the specified id might not be available");
 		} catch (DataIntegrityViolationException ex) {
-			throw new InvalidInputException("Cannot delete Pizza as it contains toppings");
+			throw new InvalidInputException("Cannot delete order eroor occurred" + ex.getStackTrace());
 		}
 		return CustomHttpResponse.createResponse(HttpStatus.NO_CONTENT, "deleted");
 	}
