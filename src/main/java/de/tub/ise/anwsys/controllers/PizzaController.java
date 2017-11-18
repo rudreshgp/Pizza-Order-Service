@@ -26,7 +26,7 @@ public class PizzaController {
 	private PizzaRepository pizzaRepository;
 
 	@Autowired
-	private ICustomRepository<Pizza,Long> customPizzaRepository;
+	private ICustomRepository<Pizza, Long> customPizzaRepository;
 
 	@RequestMapping("/pizza")
 	public ResponseEntity<List<Long>> getAllPizzas() throws ItemNotFoundException {
@@ -88,7 +88,8 @@ public class PizzaController {
 				throw new InvalidInputException("The size is invalid. either enter Large or Standard");
 			}
 		}
-		if (pizzaRepository.findOne(pizzaId) == null) {
+//		Pizza originalPizza
+		if (!customPizzaRepository.checkIfIdExists(Pizza.class.getName(), pizzaId)) {
 			throw new ItemNotFoundException("Pizza not found");
 		}
 		try {

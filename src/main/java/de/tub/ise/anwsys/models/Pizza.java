@@ -20,7 +20,7 @@ public class Pizza implements Serializable {
 
 	private double price;
 
-	@OneToMany(mappedBy = "pizza", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "pizza")
 	@JsonIgnore
 	private Set<OrderItem> orderItems;
 
