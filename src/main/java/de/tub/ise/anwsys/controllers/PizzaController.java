@@ -4,6 +4,7 @@ import de.tub.ise.anwsys.CustomExceptions.InvalidInputException;
 import de.tub.ise.anwsys.CustomExceptions.ItemNotFoundException;
 import de.tub.ise.anwsys.CustomStatus.CustomHttpResponse;
 import de.tub.ise.anwsys.models.Pizza;
+import de.tub.ise.anwsys.repos.CustomRepository.ICustomRepository;
 import de.tub.ise.anwsys.repos.PizzaRepository;
 import org.h2.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -25,11 +25,13 @@ public class PizzaController {
 	@Autowired
 	private PizzaRepository pizzaRepository;
 
+	@Autowired
+	private ICustomRepository<Pizza,Long> customPizzaRepository;
+
 	@RequestMapping("/pizza")
 	public ResponseEntity<List<Long>> getAllPizzas() throws ItemNotFoundException {
-		ArrayList<Long> pizzas = new ArrayList<>();
-		pizzaRepository.findAll().forEach(x -> pizzas.add(x.getId()));
-		if (pizzas.size() == 0) {
+		List<Long> pizzas = customPizzaRepository.getAllIds(Pizza.class.getName());
+		if (pizzas != null && pizzas.size() == 0) {
 			throw new ItemNotFoundException("No pizzas exist");
 		}
 		return CustomHttpResponse.createResponse(HttpStatus.OK, pizzas);
@@ -50,10 +52,6 @@ public class PizzaController {
 
 		if (pizza == null) {
 			throw new InvalidInputException("Invalid input");
-		}
-		String name = pizza.getName() != null ? pizza.getName().trim() : "";
-		if (StringUtils.isNullOrEmpty(name)) {
-			throw new InvalidInputException("Name is required");
 		}
 		if (StringUtils.isNullOrEmpty(pizza.getSize())) {
 			pizza.setSize(Pizza.Size.Standard.name());

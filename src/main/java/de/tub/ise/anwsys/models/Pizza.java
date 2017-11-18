@@ -1,24 +1,41 @@
 package de.tub.ise.anwsys.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Set;
 
 @Entity
-public class Pizza {
+public class Pizza implements Serializable {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
-	@Column(unique = true)
+	//	@Column(unique = true)
 	private String name;
 
 	private String size;
 
 	private double price;
 
-	@OneToMany(mappedBy = "pizza")
+	@OneToMany(mappedBy = "pizza", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
 	private Set<OrderItem> orderItems;
+
+
+	@OneToMany(mappedBy = "pizza")
+	@JsonIgnore
+	private Set<Topping> toppings;
+
+	public Set<Topping> getToppings() {
+		return toppings;
+	}
+
+	public void setToppings(Set<Topping> toppings) {
+		this.toppings = toppings;
+	}
 
 	public Set<OrderItem> getOrderItems() {
 		return orderItems;
@@ -44,6 +61,7 @@ public class Pizza {
 		this.name = name;
 	}
 
+
 	public String getSize() {
 		return this.size;
 	}
@@ -60,7 +78,22 @@ public class Pizza {
 		this.price = price;
 	}
 
+	@JsonIgnore
+	public double getTotalPrice() {
+		double totalPrice = this.price;
+		if (this.toppings != null && this.toppings.size() > 0) {
+			for (Topping topping : this.toppings) {
+				totalPrice += topping.getPrice();
+			}
+		}
+		return totalPrice;
+	}
+
 	public Pizza() {
+	}
+
+	public Pizza(long id) {
+		this.id = id;
 	}
 
 	public Pizza(long id, String name, String size, double price) {

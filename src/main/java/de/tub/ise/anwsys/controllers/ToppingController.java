@@ -5,6 +5,7 @@ import de.tub.ise.anwsys.CustomExceptions.ItemNotFoundException;
 import de.tub.ise.anwsys.CustomStatus.CustomHttpResponse;
 import de.tub.ise.anwsys.models.Pizza;
 import de.tub.ise.anwsys.models.Topping;
+import de.tub.ise.anwsys.repos.CustomRepository.CustomRepository;
 import de.tub.ise.anwsys.repos.PizzaRepository;
 import de.tub.ise.anwsys.repos.ToppingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -28,39 +28,50 @@ public class ToppingController {
 	@Autowired
 	private PizzaRepository pizzaRepository;
 
+	@Autowired
+	private CustomRepository<Topping, Long> toppingCustomRepository;
+	@Autowired
+	private CustomRepository<Pizza, Long> pizzaCustomRepository;
+
 	@RequestMapping(path = "/pizza/{pizzaId}/topping", method = RequestMethod.GET)
-	public ResponseEntity<List<Topping>> getAllToppings(@PathVariable Long pizzaId) {
-		ArrayList<Topping> pizzas = new ArrayList<>();
-		if (pizzaRepository.findOne(pizzaId) == null) {
+	public ResponseEntity<List<Long>> getAllToppings(@PathVariable Long pizzaId) {
+		if (!pizzaCustomRepository.checkIfIdExists(Pizza.class.getName(), pizzaId)) {
 			throw new ItemNotFoundException("Invalid Pizza Id");
 		}
+		List<Long> toppings = null;
 		try {
-			toppingRepository.findByPizzaId(pizzaId).forEach(pizzas::add);
+			toppings = toppingCustomRepository.getAllIdsByColumnValue(Topping.class.getName(), "", "pizza_id", pizzaId);
+//			toppingRepository.findByPizzaId(pizzaId)
 		} catch (JpaObjectRetrievalFailureException ex) {
 			throw new InvalidInputException("Invalid Pizza Id");
 		}
-		if (pizzas.size() > 0)
-			return CustomHttpResponse.createResponse(HttpStatus.OK, pizzas);
+		if (toppings.size() > 0)
+			return CustomHttpResponse.createResponse(HttpStatus.OK, toppings);
 		throw new InvalidInputException("No Toppings found");
+
 	}
 
 	@RequestMapping(value = "/pizza/{pizzaId}/topping/{toppingId}", method = RequestMethod.GET)
-	public ResponseEntity<Topping> getTopping(@PathVariable Long pizzaId, @PathVariable Long toppingId) throws ItemNotFoundException {
+	public ResponseEntity<Topping> getTopping(@PathVariable Long pizzaId, @PathVariable Long toppingId) throws
+			ItemNotFoundException {
 		Topping topping = toppingRepository.findOneByPizzaIdAndId(pizzaId, toppingId);
 		if (topping == null) {
 			throw new ItemNotFoundException("Topping or Pizza could not be found");
 		}
+		topping.setPizza(null);
 		return CustomHttpResponse.createResponse(HttpStatus.OK, topping);
 	}
 
 
 	@RequestMapping(value = "/pizza/{pizzaId}/topping", method = RequestMethod.POST)
-	public ResponseEntity<String> addTopping(@RequestBody Topping topping, @PathVariable Long pizzaId) throws InvalidInputException, ItemNotFoundException {
+	public ResponseEntity<String> addTopping(@RequestBody Topping topping, @PathVariable Long pizzaId) throws
+			InvalidInputException, ItemNotFoundException {
 		if (topping == null) {
 			throw new InvalidInputException("Invalid input");
 		}
 		try {
-			topping.setPizza(new Pizza(pizzaId, "", "", 0));
+//			topping.setPizza(new Pizza(pizzaId, "", "", 0));
+			topping.setPizza_id(pizzaId);
 			topping = toppingRepository.save(topping);
 		} catch (JpaObjectRetrievalFailureException ex) {
 			throw new ItemNotFoundException("Invalid Pizza Id");
@@ -75,7 +86,8 @@ public class ToppingController {
 
 
 	@RequestMapping(value = "/pizza/{pizzaId}/topping/{toppingId}", method = RequestMethod.PUT)
-	public ResponseEntity<String> updateTopping(@RequestBody Topping topping, @PathVariable Long pizzaId, @PathVariable Long toppingId) throws ItemNotFoundException, InvalidInputException {
+	public ResponseEntity<String> updateTopping(@RequestBody Topping topping, @PathVariable Long
+			pizzaId, @PathVariable Long toppingId) throws ItemNotFoundException, InvalidInputException {
 		if (topping == null) {
 			throw new InvalidInputException("Invalid input");
 		}
@@ -99,7 +111,8 @@ public class ToppingController {
 	}
 
 	@RequestMapping(value = "/pizza/{pizzaId}/topping/{toppingId}", method = RequestMethod.DELETE)
-	public ResponseEntity<String> deleteTopping(@PathVariable Long pizzaId, @PathVariable Long toppingId) throws ItemNotFoundException, InvalidInputException {
+	public ResponseEntity<String> deleteTopping(@PathVariable Long pizzaId, @PathVariable Long toppingId) throws
+			ItemNotFoundException, InvalidInputException {
 		if (toppingRepository.findOneByPizzaIdAndId(pizzaId, toppingId) == null) {
 			throw new ItemNotFoundException("Pizza or Topping not found");
 		}
