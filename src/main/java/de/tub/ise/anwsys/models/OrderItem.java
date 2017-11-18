@@ -1,5 +1,7 @@
 package de.tub.ise.anwsys.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.io.Serializable;
 
@@ -44,6 +46,7 @@ public class OrderItem implements Serializable {
 
 	private long quantity;
 
+	@JsonIgnore
 	public PizzaOrder getOrder() {
 		return pizzaorder;
 	}
@@ -54,9 +57,11 @@ public class OrderItem implements Serializable {
 //			this.pizzaOrder_id = order.getId();
 	}
 
-//	public long getOrderId() {
-//		return pizzaOrder_id;
-//	}
+	public long getOrderId() {
+		if (this.pizzaorder != null)
+			return pizzaorder.getId();
+		return 0;
+	}
 
 	public void setOrderId(long order_id) {
 //		this.pizzaOrder_id = order_id;
@@ -74,6 +79,7 @@ public class OrderItem implements Serializable {
 		this.pizza = new Pizza(pizza_Id);
 	}
 
+	@JsonIgnore
 	public Pizza getPizza() {
 		return pizza;
 	}

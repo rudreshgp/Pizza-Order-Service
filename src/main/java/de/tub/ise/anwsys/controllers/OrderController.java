@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -73,24 +74,36 @@ public class OrderController {
 			List<Pizza> pizzas = pizzaRepository.findByIdIn(pizzaIds);
 			double totlaPrice = 0.0;
 			if (pizzas != null && pizzas.size() > 0) {
-
-				for (OrderItem item : order.getOrderItems()) {
+				HashMap<Long, Long> foundPizzas = new HashMap<Long, Long>();
+//				OrderItem[] items = new OrderItem[order.getOrderItems().]
+				int size = order.getOrderItems().size();
+				OrderItem[] items = new OrderItem[size];
+				order.getOrderItems().toArray(items);
+				for (int i = 0; i < size; i++) {
+					OrderItem item = items[i];
 					Optional<Pizza> pizza = pizzas.stream().filter(x -> x.getId() == item.getPizzaId()).findFirst();
 					if (pizza.isPresent()) {
 						totlaPrice += (pizza.get().getTotalPrice()) * (item.getQuantity());
 					} else {
 						throw new InvalidInputException("Invalid Pizza Id");
 					}
-					item.setOrder(order);
+					if (!foundPizzas.containsKey(item.getPizzaId())) {
+						foundPizzas.put(item.getPizzaId(), item.getQuantity());
+					} else {
+						foundPizzas.put(item.getPizzaId(), foundPizzas.get(item.getPizzaId()) + item.getQuantity());
+						order.removeItem(item);
+					}
 				}
-
+				for (OrderItem item : order.getOrderItems()) {
+					item.setOrder(order);
+					item.setQuantity(foundPizzas.get(item.getPizzaId()));
+				}
 				order.setTotalPrice(totlaPrice);
 				orderRepository.save(order);
 			}
 		} catch (JpaObjectRetrievalFailureException ex) {
 			throw new InvalidInputException("The pizza with the specified id might not be available");
-		}
-		catch (JpaSystemException ex){
+		} catch (JpaSystemException ex) {
 			throw ex;
 		}
 		URI location = ServletUriComponentsBuilder
@@ -99,25 +112,25 @@ public class OrderController {
 		return CustomHttpResponse.createResponse(HttpStatus.CREATED, "location", location.getRawPath(), "Created new order successfully");
 	}
 
-	@RequestMapping(path = "/order/{orderId}", method = RequestMethod.PUT)
-	public ResponseEntity<String> updateOrder(@RequestBody PizzaOrder order, @PathVariable long orderId) throws InvalidInputException {
-		if (order == null || order.getOrderItems() == null || order.getOrderItems().size() == 0) {
-			throw new InvalidInputException("At-least one order item is required");
-		}
-		order.setId(orderId);
-		if (StringUtils.isNullOrEmpty(order.getRecipient())) {
-			throw new InvalidInputException("Recipient is mandatory");
-		}
-		if (orderRepository.findOne(orderId) == null) {
-			throw new ItemNotFoundException("Order not found");
-		}
-		try {
-			orderRepository.save(order);
-		} catch (JpaObjectRetrievalFailureException ex) {
-			throw new InvalidInputException("The pizza or the order with the specified id might not be available");
-		}
-		return CustomHttpResponse.createResponse(HttpStatus.NO_CONTENT, "Update okay");
-	}
+//	@RequestMapping(path = "/order/{orderId}", method = RequestMethod.PUT)
+//	public ResponseEntity<String> updateOrder(@RequestBody PizzaOrder order, @PathVariable long orderId) throws InvalidInputException {
+//		if (order == null || order.getOrderItems() == null || order.getOrderItems().size() == 0) {
+//			throw new InvalidInputException("At-least one order item is required");
+//		}
+//		order.setId(orderId);
+//		if (StringUtils.isNullOrEmpty(order.getRecipient())) {
+//			throw new InvalidInputException("Recipient is mandatory");
+//		}
+//		if (orderRepository.findOne(orderId) == null) {
+//			throw new ItemNotFoundException("Order not found");
+//		}
+//		try {
+//			orderRepository.save(order);
+//		} catch (JpaObjectRetrievalFailureException ex) {
+//			throw new InvalidInputException("The pizza or the order with the specified id might not be available");
+//		}
+//		return CustomHttpResponse.createResponse(HttpStatus.NO_CONTENT, "Update okay");
+//	}
 
 	@RequestMapping(path = "/order/{orderId}", method = RequestMethod.DELETE)
 	public ResponseEntity<String> delteOrder(@PathVariable long orderId) throws InvalidInputException, ItemNotFoundException {

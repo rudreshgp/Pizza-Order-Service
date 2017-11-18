@@ -1,15 +1,12 @@
 package de.tub.ise.anwsys.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "pizza_order")
-public class PizzaOrder  implements Serializable {
+public class PizzaOrder implements Serializable {
 
 //	private static final long serialVersionUID = 8089601593251025235L;
 
@@ -58,8 +55,6 @@ public class PizzaOrder  implements Serializable {
 	}
 
 
-
-
 	public PizzaOrder(long id) {
 		super();
 		id = id;
@@ -73,5 +68,10 @@ public class PizzaOrder  implements Serializable {
 		this.id = id;
 		this.recipient = recipient;
 		this.orderItems = orderItems;
+	}
+
+	public void removeItem(OrderItem item) {
+		if (this.orderItems != null)
+			this.orderItems.remove(item);
 	}
 }
