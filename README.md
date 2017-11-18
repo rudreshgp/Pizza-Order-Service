@@ -3,4 +3,4 @@ Simple spring boot base project, including pre-configured POM and simple Dockerf
 
 To use the project you need Java (JDK 8+) and Maven.
 
-# Assignments of Enterprice computing subject at TU - Berlin
+# Assignments of Enterprise computing subject at TU - Berlin
