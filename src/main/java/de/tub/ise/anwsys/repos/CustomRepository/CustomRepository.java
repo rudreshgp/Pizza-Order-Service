@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.util.List;
@@ -15,6 +16,12 @@ public class CustomRepository<T, K> implements ICustomRepository<T, K> {
 	@Autowired
 	public CustomRepository(EntityManager entityManager) {
 		this.entityManager = entityManager;
+	}
+
+	@Override
+	@Transactional
+	public void detachEntity(String className, T object) {
+		this.entityManager.detach(object);
 	}
 
 	@Override
@@ -31,12 +38,12 @@ public class CustomRepository<T, K> implements ICustomRepository<T, K> {
 
 	@Override
 	@Transactional
-	public List<K> getAllIdsByColumnValue(String className, String whereCondition , String paramName,K paramValue) {
+	public List<K> getAllIdsByColumnValue(String className, String whereCondition, String paramName, K paramValue) {
 		Query query = this.entityManager.createQuery(
 				"SELECT e.id FROM  " +
 						className +
-						" e where e.pizza_id = :pizza_id" );
-		query.setParameter(paramName,paramValue);
+						" e where e.pizza_id = :pizza_id");
+		query.setParameter(paramName, paramValue);
 		List<K> pizzas = query.getResultList();
 		this.entityManager.close();
 		return pizzas;
@@ -45,11 +52,17 @@ public class CustomRepository<T, K> implements ICustomRepository<T, K> {
 	@Override
 	@Transactional
 	public boolean checkIfIdExists(String className, K id) {
-		Query query = this.entityManager.createQuery(
-				"SELECT e.id FROM  " +
-						className +
-						" e where e.id=" + id.toString());
-		return query.getSingleResult() != null;
+		try {
+
+			Query query = this.entityManager.createQuery(
+					"SELECT e.id FROM  " +
+							className +
+							" e where e.id=" + id.toString());
+			Object object = query.getSingleResult();
+			return true;
+		} catch (NoResultException ex) {
+			return false;
+		}
 	}
 
 	public <T> T create(T object) {

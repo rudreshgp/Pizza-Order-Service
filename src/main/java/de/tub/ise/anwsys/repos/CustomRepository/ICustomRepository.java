@@ -10,4 +10,5 @@ public interface  ICustomRepository<T,K> {
 	List<K> getAllIdsByColumnValue(String className, String whereCondition , String paramName,K paramValue);
 	boolean checkIfIdExists(String className, K id);
 	<T> T create(T obj);
+	void detachEntity(String className, T object);
 }

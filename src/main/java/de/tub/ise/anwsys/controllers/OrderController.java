@@ -101,6 +101,9 @@ public class OrderController {
 				order.setTotalPrice(totlaPrice);
 				orderRepository.save(order);
 			}
+			else{
+				throw new InvalidInputException("Invalid Pizza Id");
+			}
 		} catch (JpaObjectRetrievalFailureException ex) {
 			throw new InvalidInputException("The pizza with the specified id might not be available");
 		} catch (JpaSystemException ex) {

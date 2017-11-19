@@ -100,6 +100,8 @@ public class ToppingController {
 			throw new ItemNotFoundException("Invalid PizzaId");
 		}
 		try {
+			toppingCustomRepository.detachEntity(Topping.class.getName(), originalTopping);
+			topping.setPizza_id(pizzaId);
 			toppingRepository.save(topping);
 
 		} catch (JpaObjectRetrievalFailureException ex) {
